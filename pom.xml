@@ -78,13 +78,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
 		</dependency>
-
-		<dependency>
-			<groupId>com.github.venkatramanm.swf-all</groupId>
-			<artifactId>swf</artifactId>
-			<version>${revision}</version>
-		</dependency>
-
 		<dependency>
 			<groupId>com.dhp.sdk</groupId>
 			<artifactId>dhp.sdk</artifactId>
