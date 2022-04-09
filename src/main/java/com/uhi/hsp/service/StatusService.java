@@ -83,11 +83,7 @@ public class StatusService {
 	CustomerRepository customerRepo;
 	@Autowired
 	OrderRepository orderRepository;
-	@Value("${gst.state}")
-	private double sgstValue;
-
-	@Value("${gst.center}")
-	private double cgstValue;
+	
 
 	public StatusService(ObjectMapper mapper, ProviderRepository providerRepo, ModelMapper modelMapper) {
 		this.mapper = mapper;
@@ -206,10 +202,13 @@ public class StatusService {
 	private OnTBody confirmRequest(HspRequestBody req) {
 
 		Integer providerID = Integer.parseInt(req.getMessage().getOrder().getProvider().getProviderId());
-		String cusumerId = req.getContext().getConsumer_id();
-		System.out.println("" + providerID + "::" + cusumerId);
+		//String cusumerId = req.getContext().getConsumer_id();
+		JsonNode customerNode = req.getMessage().getOrder().getFulfillment().getCustomer();
+		String customerId = customerNode.get("person").get("id").toString();
+		customerId=customerId.replace("\"", "");
+		System.out.println("__________" + providerID + "::" + customerId);
 		com.uhi.hsp.model.Billing customerData = billingRepository
-				.findByCustomerCustomerIdAndFulfillmentsProviderProviderId(cusumerId, providerID);
+				.findByCustomerCustomerIdAndFulfillmentsProviderProviderId(customerId, providerID);
 		System.out.println("daddadd" + customerData);
 		OnTBody confirmBody = this.confirmBody(req, customerData);
 		return confirmBody;
@@ -247,6 +246,9 @@ public class StatusService {
 		des.setCode(orderData.getFulfillments().getCategories().getState());
 		st.setDescriptor(des);
 		fullfillmentDto.setState(st);
+		//fulfillments.setStatus("BOOKED");
+		fulfillmentsRepo.updateStatus("BOOKED",fulfillments.getFulfillmentId());
+		//fullfillmentDto.setState("Booked");
 		Practitioner practitioner = orderData.getFulfillments().getPractitionerId();
 		Person personDto = modelMapper.map(practitioner, Person.class);
 		// System.out.println("practitionerId"+practitionerId);
@@ -284,7 +286,7 @@ public class StatusService {
 		Double consultationValue = Double.parseDouble(consultationCharge);
 		Double value = sgst + cgst + phrHandlingFees + consultationValue;
 
-		price = extractedPriceQuote(phrHandlingFees, consultationCharge, price);
+		price = extractedPriceQuote(phrHandlingFees, consultationCharge, price,cgst,sgst);
 
 		price.setCurrency(billingData.getFulfillments().getPractitionerId().getCurrency());
 		price.setValue(value.toString());
@@ -443,7 +445,7 @@ public class StatusService {
 
 	//
 
-	private Price extractedPriceQuote(double phrHandlingFees, String consultationCharge, Price price) {
+	private Price extractedPriceQuote(double phrHandlingFees, String consultationCharge, Price price,double cgstValue,double sgstValue) {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode node;
 
@@ -524,7 +526,7 @@ public class StatusService {
 			itemList.add(item);
 			// List<JsonNode> nodeList = null;
 			Price price = new Price();
-			price = extractedPriceQuote(phrHandlingFees, consultationCharge, price);
+			price = extractedPriceQuote(phrHandlingFees, consultationCharge, price,sgst,cgst);
 			// nodeList = generateNode(nodeList, consultationCharge, phrHandlingFees, sgst,
 			// cgst, value);
 			// price.setBreakup(nodeList);
