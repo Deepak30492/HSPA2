@@ -26,6 +26,7 @@ import com.uhi.hsp.repository.PaymentRepository;
 import com.uhi.hsp.repository.PractitionerRepository;
 import com.uhi.hsp.repository.ProviderRepository;
 
+import org.hibernate.boot.model.source.internal.hbm.Helper;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +37,17 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 @Service
@@ -64,6 +70,8 @@ public class StatusService {
 	@Value("classpath:static/on_status.json")
 	private Resource on_statusFile;
 
+	 @Value("${abdm.gateway.url}")
+	private String GATEWAY_URL;
 	final ObjectMapper mapper;
 
 	final ModelMapper modelMapper;
@@ -83,7 +91,6 @@ public class StatusService {
 	CustomerRepository customerRepo;
 	@Autowired
 	OrderRepository orderRepository;
-	
 
 	public StatusService(ObjectMapper mapper, ProviderRepository providerRepo, ModelMapper modelMapper) {
 		this.mapper = mapper;
@@ -94,10 +101,16 @@ public class StatusService {
 	public EuaRequestBody mapSearch(HspRequestBody req) throws IOException {
 		EuaRequestBody searchedProviderData = getSearchByProviderName(req);
 		String messageId = req.getContext().getMessage_id();
-		HttpEntity<Object> entity = generateEntityWithHeaders(searchedProviderData, messageId);
-		// String endpoint = req.getContext().getConsumer_uri();
-		// restTemplate.postForObject(endpoint + "/on_search", entity, String.class);
+		//HttpEntity<Object> entity = generateEntityWithHeaders(searchedProviderData, messageId);
+		try {
+			Thread.sleep(3000);
+			System.out.println("_____"+GATEWAY_URL);
+			//String endpoint = req.getContext().getConsumer_uri();
+			restTemplate.postForObject(GATEWAY_URL + "/on_search", searchedProviderData, String.class);
 
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}		
 		return searchedProviderData;
 	}
 
@@ -172,13 +185,13 @@ public class StatusService {
 		Integer fulfillmentId = Integer.parseInt(req.getMessage().getOrder().getItems().get(0).getFulfillment_id());
 		Fulfillments fulfillmentData = fulfillmentsRepo.findByFulfillmentIdAndProviderProviderId(fulfillmentId,
 				providerId);
-		if(fulfillmentData==null) {
-			throw new RecordNotFoundException("Recod Does NOT Found ID:"+providerId);
+		if (fulfillmentData == null) {
+			throw new RecordNotFoundException("Recod Does NOT Found ID:" + providerId);
 		}
-		if(fulfillmentData==null) {
-			throw new RecordNotFoundException("Recod Does NOT Found ID:"+providerId);
+		if (fulfillmentData == null) {
+			throw new RecordNotFoundException("Recod Does NOT Found ID:" + providerId);
 		}
-		
+
 		mapToJson = this.mapToJson(req, fulfillmentData);
 		return mapToJson;
 
@@ -202,10 +215,10 @@ public class StatusService {
 	private OnTBody confirmRequest(HspRequestBody req) {
 
 		Integer providerID = Integer.parseInt(req.getMessage().getOrder().getProvider().getProviderId());
-		//String cusumerId = req.getContext().getConsumer_id();
+		// String cusumerId = req.getContext().getConsumer_id();
 		JsonNode customerNode = req.getMessage().getOrder().getFulfillment().getCustomer();
 		String customerId = customerNode.get("person").get("id").toString();
-		customerId=customerId.replace("\"", "");
+		customerId = customerId.replace("\"", "");
 		System.out.println("__________" + providerID + "::" + customerId);
 		com.uhi.hsp.model.Billing customerData = billingRepository
 				.findByCustomerCustomerIdAndFulfillmentsProviderProviderId(customerId, providerID);
@@ -241,14 +254,14 @@ public class StatusService {
 		nodes.put("/nha.health_id", customer.getCustomerId());
 		nodes.put("./nha.phr_address", customer.getCred());
 		fullfillmentDto.setCustomer(nodes);
-		State st=new State();
-		Descriptor des=new Descriptor();
+		State st = new State();
+		Descriptor des = new Descriptor();
 		des.setCode(orderData.getFulfillments().getCategories().getState());
 		st.setDescriptor(des);
 		fullfillmentDto.setState(st);
-		//fulfillments.setStatus("BOOKED");
-		fulfillmentsRepo.updateStatus("BOOKED",fulfillments.getFulfillmentId());
-		//fullfillmentDto.setState("Booked");
+		// fulfillments.setStatus("BOOKED");
+		fulfillmentsRepo.updateStatus("BOOKED", fulfillments.getFulfillmentId());
+		// fullfillmentDto.setState("Booked");
 		Practitioner practitioner = orderData.getFulfillments().getPractitionerId();
 		Person personDto = modelMapper.map(practitioner, Person.class);
 		// System.out.println("practitionerId"+practitionerId);
@@ -259,7 +272,7 @@ public class StatusService {
 		// System.out.println("idd"+orderData.getOrderId());
 		order.setId(orderData.getOrderId());
 		order.setState("Booked");
-		
+
 		Descriptor descriptor = new Descriptor();
 		descriptor.setName(orderData.getFulfillments().getType());
 		providerData.setDescriptor(descriptor);
@@ -286,7 +299,7 @@ public class StatusService {
 		Double consultationValue = Double.parseDouble(consultationCharge);
 		Double value = sgst + cgst + phrHandlingFees + consultationValue;
 
-		price = extractedPriceQuote(phrHandlingFees, consultationCharge, price,cgst,sgst);
+		price = extractedPriceQuote(phrHandlingFees, consultationCharge, price, cgst, sgst);
 
 		price.setCurrency(billingData.getFulfillments().getPractitionerId().getCurrency());
 		price.setValue(value.toString());
@@ -445,7 +458,8 @@ public class StatusService {
 
 	//
 
-	private Price extractedPriceQuote(double phrHandlingFees, String consultationCharge, Price price,double cgstValue,double sgstValue) {
+	private Price extractedPriceQuote(double phrHandlingFees, String consultationCharge, Price price, double cgstValue,
+			double sgstValue) {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonNode node;
 
@@ -526,7 +540,7 @@ public class StatusService {
 			itemList.add(item);
 			// List<JsonNode> nodeList = null;
 			Price price = new Price();
-			price = extractedPriceQuote(phrHandlingFees, consultationCharge, price,sgst,cgst);
+			price = extractedPriceQuote(phrHandlingFees, consultationCharge, price, sgst, cgst);
 			// nodeList = generateNode(nodeList, consultationCharge, phrHandlingFees, sgst,
 			// cgst, value);
 			// price.setBreakup(nodeList);
@@ -572,8 +586,8 @@ public class StatusService {
 				// generating order id
 				String orderId = UUID.randomUUID().toString();
 				billingData.setOrderId(orderId);
-				
-				//saving order
+
+				// saving order
 				billingRepository.save(billingData);
 				billing = modelMapper.map(billing, com.dhp.sdk.beans.Billing.class);
 				order.setBilling(billing);
