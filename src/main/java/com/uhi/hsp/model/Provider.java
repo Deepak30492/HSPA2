@@ -13,7 +13,7 @@ import java.util.List;
 
 @Data
 @ToString
-@Table(schema = "hsp", name = "provider")
+@Table(schema = "hsp2", name = "provider")
 @Entity
 //@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonIdentityInfo(generator = ObjectIdGenerators.IntSequenceGenerator.class, property = "@id")

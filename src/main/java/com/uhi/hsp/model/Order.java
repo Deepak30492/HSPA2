@@ -22,7 +22,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(schema = "hsp")
+@Table(schema = "hsp2")
 //@SequenceGenerator(name = "seq", initialValue = 100, allocationSize = 1000)
 public class Order {
 	@Id

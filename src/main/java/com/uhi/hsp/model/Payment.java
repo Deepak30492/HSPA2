@@ -10,7 +10,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(schema = "hsp")
+@Table(schema = "hsp2")
 public class Payment {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)

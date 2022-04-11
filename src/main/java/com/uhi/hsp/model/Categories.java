@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-@Table(schema = "hsp")
+@Table(schema = "hsp2")
 @Entity
 //@ToString
 //@JsonIgnoreProperties(ignoreUnknown = true)

@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import java.io.Serializable;
 
 @Data
-@Table(schema = "hsp", name = "practitioner")
+@Table(schema = "hsp2", name = "practitioner")
 @Entity
 @ToString
 @JsonIdentityInfo(generator=ObjectIdGenerators.IntSequenceGenerator.class, property="@id")

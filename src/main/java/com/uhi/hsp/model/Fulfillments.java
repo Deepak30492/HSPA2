@@ -12,7 +12,7 @@ import lombok.Data;
 import lombok.ToString;
 
 @Data
-@Table(schema = "hsp")
+@Table(schema = "hsp2")
 @Entity
 @JsonIgnoreProperties
 @ToString

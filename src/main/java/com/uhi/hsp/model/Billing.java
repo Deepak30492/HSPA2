@@ -8,7 +8,7 @@ import java.io.Serializable;
 import javax.persistence.*;
 
 @Entity
-@Table(schema = "hsp")
+@Table(schema = "hsp2")
 @Data
 @ToString
 public class Billing implements Serializable{

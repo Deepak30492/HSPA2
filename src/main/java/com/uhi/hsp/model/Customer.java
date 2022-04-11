@@ -17,7 +17,7 @@ import javax.persistence.Table;
 import lombok.Data;
 @Data
 @Entity
-@Table(schema = "hsp")
+@Table(schema = "hsp2")
 public class Customer {
 	@Id
 	//@GeneratedValue(strategy = GenerationType.AUTO)
