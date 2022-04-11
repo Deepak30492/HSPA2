@@ -1,6 +1,9 @@
 package com.uhi.hsp.repository;
 
 import com.uhi.hsp.model.Fulfillments;
+import com.uhi.hsp.model.Practitioner;
+
+import java.util.List;
 
 import javax.transaction.Transactional;
 
@@ -14,5 +17,6 @@ public interface FulfillmentsRepository extends JpaRepository<Fulfillments, Inte
 	@Modifying
 	@Query("update Fulfillments f set f.status = :status where f.fulfillmentId = :id")
 	int updateStatus(@Param("status") String status, @Param("id") Integer id);
+	public List<Fulfillments> findByPractitionerIdNameIgnoreCase(String name);
 	
 }

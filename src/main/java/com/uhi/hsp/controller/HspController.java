@@ -1,9 +1,14 @@
 package com.uhi.hsp.controller;
 
 import com.dhp.sdk.beans.OnTBody;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.uhi.hsp.dto.EuaRequestBody;
 import com.uhi.hsp.dto.HspRequestBody;
 import com.uhi.hsp.service.StatusService;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,9 +30,12 @@ public class HspController {
 	@Value("${spring.application.resp_ack}")
 	String resp_ack;
 
+	@Autowired
+	ModelMapper mapper;
 
-	public HspController(StatusService service) {
+	public HspController(StatusService service,ModelMapper  mapper) {
 		this.service = service;
+		this. mapper= mapper;
 	}
 
 	private final StatusService service;
@@ -36,11 +44,10 @@ public class HspController {
 	public ResponseEntity<String> search(@RequestBody HspRequestBody req) throws IOException {
 		EuaRequestBody body = service.mapSearch(req);
 		// HttpHeaders headers = new HttpHeaders();
-		// headers.setContentType(MediaType.APPLICATION_JSON);
+		// headers.setContentType(MediaType.APPLICATION_JSON);resp_ack
 		return ResponseEntity.status(HttpStatus.OK).body(resp_ack);
 	
 	}
-
 	@PostMapping(value = "/select", consumes = "APPLICATION/JSON", produces = "APPLICATION/JSON")
 	public ResponseEntity<OnTBody> select(@RequestBody HspRequestBody req) throws IOException {
 		OnTBody body = service.mapSelect(req);

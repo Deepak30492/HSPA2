@@ -26,6 +26,7 @@ import com.uhi.hsp.repository.PaymentRepository;
 import com.uhi.hsp.repository.PractitionerRepository;
 import com.uhi.hsp.repository.ProviderRepository;
 
+import org.aspectj.weaver.ast.Instanceof;
 import org.hibernate.boot.model.source.internal.hbm.Helper;
 import org.modelmapper.ModelMapper;
 import org.springframework.core.io.Resource;
@@ -36,9 +37,12 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.RestTemplate;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
 
 import java.io.IOException;
 import java.net.http.HttpRequest;
@@ -70,7 +74,7 @@ public class StatusService {
 	@Value("classpath:static/on_status.json")
 	private Resource on_statusFile;
 
-	 @Value("${abdm.gateway.url}")
+	@Value("${abdm.gateway.url}")
 	private String GATEWAY_URL;
 	final ObjectMapper mapper;
 
@@ -99,19 +103,30 @@ public class StatusService {
 	}
 
 	public EuaRequestBody mapSearch(HspRequestBody req) throws IOException {
-		EuaRequestBody searchedProviderData = getSearchByProviderName(req);
+		String map = modelMapper.map(req, String.class);
+		EuaRequestBody searchData = null;
+		System.out.println("****************" + map.contains("person"));
+		System.out.println();
+		System.out.println("__________________________");
+		if (map.contains("person")) {
+			searchData = getSearchByPersonName(req);
+		} else {
+			searchData = getSearchByServiceName(req);
+		}
 		String messageId = req.getContext().getMessage_id();
-		//HttpEntity<Object> entity = generateEntityWithHeaders(searchedProviderData, messageId);
+		// HttpEntity<Object> entity = generateEntityWithHeaders(searchedProviderData,
+		// messageId);
 		try {
 			Thread.sleep(3000);
-			System.out.println("_____"+GATEWAY_URL);
-			//String endpoint = req.getContext().getConsumer_uri();
-			restTemplate.postForObject(GATEWAY_URL + "/on_search", searchedProviderData, String.class);
+			System.out.println("_____" + GATEWAY_URL);
+			// String endpoint = req.getContext().getConsumer_uri();
+			// restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData,
+			// String.class);
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		}		
-		return searchedProviderData;
+		}
+		return searchData;
 	}
 
 	public OnTBody mapSelect(HspRequestBody req) throws IOException {
@@ -151,7 +166,7 @@ public class StatusService {
 
 	}
 
-	private EuaRequestBody getSearchByProviderName(HspRequestBody req) {
+	private EuaRequestBody getSearchByServiceName(HspRequestBody req) {
 		EuaRequestBody euaRequestBody = new EuaRequestBody();
 		euaRequestBody = (EuaRequestBody) extracteContext(req, euaRequestBody);
 		System.out.println("__________" + euaRequestBody);
@@ -174,6 +189,44 @@ public class StatusService {
 			ArrayList<com.dhp.sdk.beans.Provider> providerList = new ArrayList<>();
 			providerList.add(providerDto);
 			euaRequestBody = extractedContext(euaRequestBody, providerList);
+		}
+		return euaRequestBody;
+	}
+
+	// search by person name
+
+	private EuaRequestBody getSearchByPersonName(HspRequestBody req) {
+		EuaRequestBody euaRequestBody = new EuaRequestBody();
+		euaRequestBody = (EuaRequestBody) extracteContext(req, euaRequestBody);
+		// OnTBody requestBody = new OnTBody();
+
+		// requestBody = (OnTBody) extracteContext(req, requestBody);
+		System.out.println("__________" + euaRequestBody);
+		Fulfillment personDto = null;
+		String name = req.getMessage().getIntent().getFulfillment().getPerson().getDescriptor().getName();
+		System.out.println("_______" + name);
+		List<Fulfillments> personData;
+		personData = (ArrayList<Fulfillments>) fulfillmentsRepo.findByPractitionerIdNameIgnoreCase(name);
+
+		// Provider result = personData;
+		// System.out.println("_____________"+result.get(0));
+		if (personData != null) {
+			personDto = modelMapper.map(personData, com.dhp.sdk.beans.Fulfillment.class);
+			com.dhp.sdk.beans.Provider providerDto = modelMapper.map(personData, com.dhp.sdk.beans.Provider.class);
+			System.out.println("_________" + personData);
+			System.out.println("##################" + providerDto);
+			// List<Fulfillments> fulfillmentInResult=
+			// providerDto.setFulfillments(personData);
+			int counterForPerson = 0;
+			// List<Fulfillments> fulfillmentInResult = personData.get(0).getFulfillments();
+			// providerDto = extractedCategoryDescriptorNames(providerDto, result);
+			// providerDto = extractedPerson(providerDto, result, counterForPerson);
+
+			int counterForTimer = 0;
+			ArrayList<com.dhp.sdk.beans.Provider> providerList = new ArrayList<>();
+			providerList.add(providerDto);
+			euaRequestBody = extractedContext(euaRequestBody, providerList);
+
 		}
 		return euaRequestBody;
 	}
