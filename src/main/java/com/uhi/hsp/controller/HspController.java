@@ -45,7 +45,7 @@ public class HspController {
 		EuaRequestBody body = service.mapSearch(req);
 		// HttpHeaders headers = new HttpHeaders();
 		// headers.setContentType(MediaType.APPLICATION_JSON);resp_ack
-		return ResponseEntity.status(HttpStatus.OK).body(resp_ack);
+		return ResponseEntity.status(HttpStatus.OK).body( resp_ack );
 	
 	}
 	@PostMapping(value = "/select", consumes = "APPLICATION/JSON", produces = "APPLICATION/JSON")

@@ -120,7 +120,7 @@ public class StatusService {
 			Thread.sleep(3000);
 			System.out.println("_____" + GATEWAY_URL);
 			// String endpoint = req.getContext().getConsumer_uri();
-			// restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData,
+			restTemplate.postForObject(GATEWAY_URL + "/on_search", searchData, String.class);
 			// String.class);
 
 		} catch (InterruptedException e) {
@@ -212,7 +212,7 @@ public class StatusService {
 		// System.out.println("_____________"+result.get(0));
 		if (personData != null) {
 			personDto = modelMapper.map(personData, com.dhp.sdk.beans.Fulfillment.class);
-			com.dhp.sdk.beans.Provider providerDto = modelMapper.map(personData, com.dhp.sdk.beans.Provider.class);
+			com.dhp.sdk.beans.Provider providerDto = modelMapper.map(personData.get(0), com.dhp.sdk.beans.Provider.class);
 			System.out.println("_________" + personData);
 			System.out.println("##################" + providerDto);
 			// List<Fulfillments> fulfillmentInResult=
